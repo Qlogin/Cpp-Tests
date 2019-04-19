@@ -52,7 +52,6 @@ namespace
          setValidator(new Validator(1, max_num, this));
          setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
          setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-         setStyleSheet(":focus { background-color: rgb(225, 225, 255); }");
       }
 
    private:
@@ -78,6 +77,7 @@ SudokuWidget::SudokuWidget(QWidget *parent, uint N)
    : QWidget(parent)
    , max_num_(N * N)
 {
+   setStyleSheet("QLineEdit:focus { background-color: rgb(225, 225, 255); }");
    edits_.resize(max_num_ * max_num_);
 
    auto layout = new QGridLayout(this);
@@ -135,6 +135,29 @@ void SudokuWidget::keyPressEvent( QKeyEvent * e )
 
    edits_[(i + N) % N]->setFocus();
    e->accept();
+}
+
+uint SudokuWidget::value(uint row, uint col) const
+{
+   if (row < max_num_ || col < max_num_)
+   {
+      QString const val = edits_[row * max_num_ + col]->text();
+      if (!val.isEmpty())
+         return val.toUInt();
+   }
+   return 0;
+}
+
+void SudokuWidget::setValue(uint row, uint col, uint value)
+{
+   if (row < max_num_ || col < max_num_)
+   {
+      auto edit = edits_[row * max_num_ + col];
+      if (0 < value && value <= max_num_)
+         edit->setText(QString::number(value));
+      else
+         edit->clear();
+   }
 }
 
 void SudokuWidget::clear()

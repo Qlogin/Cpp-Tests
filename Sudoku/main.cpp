@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
    mw.setCentralWidget(sudoku);
 
    auto tb = mw.addToolBar(QString("Edit"));
-   tb->addAction(QString("Clear"), sudoku, &SudokuWidget::clear);
+   tb->addAction(QString("Clear"), sudoku, SLOT(clear()));
 
    mw.show();
    return a.exec();

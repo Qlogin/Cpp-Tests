@@ -14,7 +14,10 @@ public:
    SudokuWidget(QWidget *parent = 0, uint N = 3);
    ~SudokuWidget();
 
+   uint value(uint row, uint col) const;
+
 public slots:
+   void setValue(uint row, uint col, uint value);
    void clear();
 
 private:
