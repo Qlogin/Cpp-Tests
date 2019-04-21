@@ -26,7 +26,7 @@ namespace
          while (i != input.size() && input[i] == '0')
             ++i;
          if (i > 0)
-            input = input.mid(i);
+            input = input.mid(i).trimmed();
       }
 
       QValidator::State validate(QString & input, int & pos) const override
@@ -36,6 +36,14 @@ namespace
             pos = 0;
             return QValidator::Invalid;
          }
+
+         auto space = input.indexOf(' ');
+         if (space != -1)
+         {
+            pos = space;
+            return QValidator::Invalid;
+         }
+
          return QIntValidator::validate(input, pos);
       }
    };
