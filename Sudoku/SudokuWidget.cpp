@@ -4,9 +4,9 @@
 #include <QFrame>
 #include <QLineEdit>
 #include <QValidator>
-
 #include <QKeyEvent>
 
+#include <vector>
 
 namespace
 {
@@ -49,7 +49,7 @@ namespace
          QFont font;
          font.setPointSize(15);
          setFont(font);
-         setValidator(new Validator(1, max_num, this));
+         setValidator(new Validator(1, int(max_num), this));
          setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
          setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
       }
@@ -60,7 +60,7 @@ namespace
          return QSize(40, 40);
       }
 
-      void keyPressEvent(QKeyEvent * e)
+      void keyPressEvent(QKeyEvent * e) override
       {
          if (e->key() == Qt::Key_Left || e->key() == Qt::Key_Right ||
              e->key() == Qt::Key_Up   || e->key() == Qt::Key_Down)
@@ -73,17 +73,30 @@ namespace
    };
 }
 
+struct SudokuWidget::SudokuWidgetPrivate
+{
+   SudokuWidgetPrivate(uint N)
+      : max_num(N * N)
+   {
+      values.resize(max_num * max_num, 0);
+      edits.resize(values.size(), nullptr);
+   }
+
+   uint max_num;
+   std::vector<uint> values;
+   std::vector<QLineEdit *> edits;
+};
+
 SudokuWidget::SudokuWidget(QWidget *parent, uint N)
    : QWidget(parent)
-   , max_num_(N * N)
+   , pimpl_(new SudokuWidgetPrivate(N))
 {
-   setStyleSheet("QLineEdit:focus { background-color: rgb(225, 225, 255); }");
-   edits_.resize(max_num_ * max_num_);
+   auto & d = *pimpl_;
 
    auto layout = new QGridLayout(this);
    layout->setSpacing(1);
 
-   for (size_t i = 0; i != max_num_; ++i)
+   for (uint i = 0; i != d.max_num; ++i)
    {
       auto frame = new QFrame(this);
       frame->setFrameShape(QFrame::Box);
@@ -92,14 +105,27 @@ SudokuWidget::SudokuWidget(QWidget *parent, uint N)
       l->setMargin(1);
       l->setSpacing(1);
 
-      for (size_t j = 0; j != max_num_; ++j)
+      for (uint j = 0; j != d.max_num; ++j)
       {
-         auto edit = new Edit(max_num_, frame);
+         auto edit = new Edit(d.max_num, frame);
          l->addWidget(edit, j / N, j % N);
 
-         int const id = ((i / N) * N + j / N) * max_num_
-                      + ((i % N) * N + j % N);
-         edits_[id] = edit;
+         uint const id = ((i / N) * N + j / N) * d.max_num
+                       + ((i % N) * N + j % N);
+         d.edits[id] = edit;
+
+         connect(edit, &QLineEdit::textChanged, this,
+            [this, id] (QString const & value)
+            {
+               auto & d = *pimpl_;
+
+               auto new_val = value.toUInt();
+               if (new_val != d.values[id])
+               {
+                  d.values[id] = new_val;
+                  emit valueChanged(id / d.max_num, id % d.max_num, new_val);
+               }
+            });
       }
       layout->addWidget(frame, i / N, i % N);
    }
@@ -111,12 +137,14 @@ SudokuWidget::~SudokuWidget()
 
 void SudokuWidget::keyPressEvent( QKeyEvent * e )
 {
-   int const N = max_num_ * max_num_;
-   int i = N;
+   auto & d = *pimpl_;
+
+   uint const N = d.max_num * d.max_num;
+   uint i = N;
    while (i > 0)
    {
       --i;
-      if (edits_[i]->hasFocus())
+      if (d.edits[i]->hasFocus())
          break;
    }
 
@@ -124,8 +152,8 @@ void SudokuWidget::keyPressEvent( QKeyEvent * e )
    {
    case Qt::Key_Left:   i -= 1; break;
    case Qt::Key_Right:  i += 1; break;
-   case Qt::Key_Up:     i -= max_num_; break;
-   case Qt::Key_Down:   i += max_num_; break;
+   case Qt::Key_Up:     i -= d.max_num; break;
+   case Qt::Key_Down:   i += d.max_num; break;
    default:
       {
          QWidget::keyPressEvent(e);
@@ -133,35 +161,49 @@ void SudokuWidget::keyPressEvent( QKeyEvent * e )
       }
    }
 
-   edits_[(i + N) % N]->setFocus();
+   d.edits[(i + N) % N]->setFocus();
    e->accept();
 }
 
 uint SudokuWidget::value(uint row, uint col) const
 {
-   if (row < max_num_ || col < max_num_)
-   {
-      QString const val = edits_[row * max_num_ + col]->text();
-      if (!val.isEmpty())
-         return val.toUInt();
-   }
+   auto & d = *pimpl_;
+
+   if (row < d.max_num || col < d.max_num)
+      return d.values[row * d.max_num + col];
+
    return 0;
 }
 
 void SudokuWidget::setValue(uint row, uint col, uint value)
 {
-   if (row < max_num_ || col < max_num_)
+   auto & d = *pimpl_;
+
+   if (row < d.max_num || col < d.max_num)
    {
-      auto edit = edits_[row * max_num_ + col];
-      if (0 < value && value <= max_num_)
+      auto const idx = row * d.max_num + col;
+      auto edit = d.edits[idx];
+      QSignalBlocker block(edit);
+
+      if (0 < value && value <= d.max_num)
+      {
+         d.values[idx] = value;
          edit->setText(QString::number(value));
+      }
       else
+      {
+         d.values[idx] = 0;
          edit->clear();
+      }
    }
 }
 
 void SudokuWidget::clear()
 {
-   for (auto e : edits_)
+   auto & d = *pimpl_;
+
+   for (auto e : d.edits)
       e->clear();
+
+   std::fill(d.values.begin(), d.values.end(), 0);
 }
