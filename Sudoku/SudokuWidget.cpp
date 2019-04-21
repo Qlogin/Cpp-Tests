@@ -196,7 +196,8 @@ void SudokuWidget::keyPressEvent( QKeyEvent * e )
       }
    }
 
-   d.edits[(i + N) % N]->setFocus();
+   if (i < N)
+      d.edits[i]->setFocus();
    e->accept();
 }
 
