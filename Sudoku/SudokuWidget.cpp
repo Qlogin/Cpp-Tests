@@ -48,13 +48,15 @@ namespace
       }
    };
 
+   static const QColor active_color(220, 220, 255);
+   static const QColor readonly_color(200, 200, 200);
+
    class Edit : public QLineEdit
    {
    public:
       Edit(uint max_num, QWidget * parent = nullptr)
          : QLineEdit(parent)
          , normal_color_(palette().color(QPalette::Base))
-         , active_color_(220, 220, 255)
       {
          QFont font;
          font.setPointSize(15);
@@ -63,6 +65,14 @@ namespace
          setValidator(new Validator(1, int(max_num), this));
          setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
          setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+      }
+
+      void setReadOnly( bool readonly )
+      {
+         QLineEdit::setReadOnly(readonly);
+         setBackground(readonly   ? readonly_color :
+                       hasFocus() ? active_color :
+                                    normal_color_);
       }
 
    private:
@@ -92,19 +102,20 @@ namespace
 
       void focusInEvent(QFocusEvent * e) override
       {
-         setBackground(active_color_);
+         if (!isReadOnly())
+            setBackground(active_color);
          QLineEdit::focusInEvent(e);
       }
 
       void focusOutEvent(QFocusEvent * e) override
       {
-         setBackground(normal_color_);
+         if (!isReadOnly())
+            setBackground(normal_color_);
          QLineEdit::focusOutEvent(e);
       }
 
    private:
       QColor const normal_color_;
-      QColor const active_color_;
    };
 }
 
@@ -119,7 +130,7 @@ struct SudokuWidget::SudokuWidgetPrivate
 
    uint max_num;
    std::vector<uint> values;
-   std::vector<QLineEdit *> edits;
+   std::vector<Edit *> edits;
 };
 
 SudokuWidget::SudokuWidget(QWidget *parent, uint N)
@@ -183,18 +194,21 @@ void SudokuWidget::keyPressEvent( QKeyEvent * e )
          break;
    }
 
-   switch (e->key())
+   do
    {
-   case Qt::Key_Left:   i -= 1; break;
-   case Qt::Key_Right:  i += 1; break;
-   case Qt::Key_Up:     i -= d.max_num; break;
-   case Qt::Key_Down:   i += d.max_num; break;
-   default:
+      switch (e->key())
       {
-         QWidget::keyPressEvent(e);
-         return;
+      case Qt::Key_Left:   i -= 1; break;
+      case Qt::Key_Right:  i += 1; break;
+      case Qt::Key_Up:     i -= d.max_num; break;
+      case Qt::Key_Down:   i += d.max_num; break;
+      default:
+         {
+            QWidget::keyPressEvent(e);
+            return;
+         }
       }
-   }
+   } while (i < N && d.edits[i]->isReadOnly());
 
    if (i < N)
       d.edits[i]->setFocus();
@@ -211,7 +225,7 @@ uint SudokuWidget::value(uint row, uint col) const
    return 0;
 }
 
-void SudokuWidget::setValue(uint row, uint col, uint value)
+void SudokuWidget::setValue(uint row, uint col, uint value, bool readonly)
 {
    auto & d = *pimpl_;
 
@@ -225,21 +239,39 @@ void SudokuWidget::setValue(uint row, uint col, uint value)
       {
          d.values[idx] = value;
          edit->setText(QString::number(value));
+         edit->setReadOnly(readonly);
       }
       else
       {
          d.values[idx] = 0;
+         edit->setReadOnly(false);
          edit->clear();
       }
    }
 }
 
-void SudokuWidget::clear()
+void SudokuWidget::setReadOnly(uint row, uint col, bool readonly)
+{
+   auto & d = *pimpl_;
+
+   if (row < d.max_num || col < d.max_num)
+   {
+      auto const idx = row * d.max_num + col;
+      if (d.values[idx])
+         d.edits[idx]->setReadOnly(readonly);
+   }
+}
+
+void SudokuWidget::clear(bool reset_readonly)
 {
    auto & d = *pimpl_;
 
    for (auto e : d.edits)
-      e->clear();
+      if (reset_readonly || !e->isReadOnly())
+      {
+         e->setReadOnly(false);
+         e->clear();
+      }
 
    std::fill(d.values.begin(), d.values.end(), 0);
 }
