@@ -53,13 +53,24 @@ namespace
    public:
       Edit(uint max_num, QWidget * parent = nullptr)
          : QLineEdit(parent)
+         , normal_color_(palette().color(QPalette::Base))
+         , active_color_(220, 220, 255)
       {
          QFont font;
          font.setPointSize(15);
          setFont(font);
+
          setValidator(new Validator(1, int(max_num), this));
          setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
          setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
+      }
+
+   private:
+      void setBackground( QColor const & color )
+      {
+         QPalette pal = palette();
+         pal.setColor(QPalette::Base, color);
+         setPalette(pal);
       }
 
    private:
@@ -78,6 +89,22 @@ namespace
          }
          QLineEdit::keyPressEvent(e);
       }
+
+      void focusInEvent(QFocusEvent * e) override
+      {
+         setBackground(active_color_);
+         QLineEdit::focusInEvent(e);
+      }
+
+      void focusOutEvent(QFocusEvent * e) override
+      {
+         setBackground(normal_color_);
+         QLineEdit::focusOutEvent(e);
+      }
+
+   private:
+      QColor const normal_color_;
+      QColor const active_color_;
    };
 }
 
