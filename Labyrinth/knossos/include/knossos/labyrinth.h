@@ -4,6 +4,7 @@
 #include <boost/optional.hpp>
 
 #include <memory>
+#include <exception>
 
 
 namespace knossos
@@ -40,6 +41,10 @@ namespace knossos
       sections_range_t;
 
    ////////////////////////////////////////////////////////////////////////////
+
+   struct position_error_t : std::exception
+   {
+   };
 
    class labyrinth_t
    {

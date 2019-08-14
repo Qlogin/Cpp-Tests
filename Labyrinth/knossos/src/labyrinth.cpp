@@ -1,7 +1,7 @@
 #include "utils.h"
+#include "exceptions.h"
 
 #include <set>
-#include <exception>
 #include <assert.h>
 
 
@@ -65,7 +65,7 @@ namespace knossos
       add_sections(sections);
       if (start_pos)
          if (!set_position(*start_pos))
-            throw std::runtime_error("incorrect start position");
+            throw incorrect_position_error_t();
    }
 
    labyrinth_t::~labyrinth_t()
@@ -122,7 +122,7 @@ namespace knossos
    position_t const & labyrinth_t::get_position() const
    {
       if (pimpl_->current_pos)
-         throw std::runtime_error("position is not set");
+         throw position_not_set_error_t();
 
       return *pimpl_->current_pos;
    }
@@ -131,9 +131,9 @@ namespace knossos
                               boost::optional<position_t> const & start_pos)
    {
       if (start_pos && !set_position(*start_pos))
-         throw std::runtime_error("incorrect start position");
+         throw incorrect_position_error_t();
       if (!pimpl_->current_pos)
-         throw std::runtime_error("position is not set");
+         throw position_not_set_error_t();
 
       for (auto dir : route)
          if (auto next = pimpl_->current_pos->neigbours[dir])
