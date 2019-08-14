@@ -46,14 +46,10 @@ int main(int argc, char *argv[])
          std::cerr << "incorrect start position: " << args->x0 << " " << args->y0 << std::endl;
          return 1;
       }
-
       lab.navigate(args->route | ba::transformed(&char_to_dir));
 
-      auto pos = lab.get_position();
-      if (!pos)
-         throw std::runtime_error("Something goes wrong!");
-
-      std::cout << "(" << pos->x << "," << pos->y << ")" << std::endl;
+      auto const & pos = lab.get_position();
+      std::cout << "(" << pos.x << "," << pos.y << ")" << std::endl;
       return 0;
    }
    catch (std::exception const & e)
