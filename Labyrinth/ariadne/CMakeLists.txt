@@ -7,6 +7,7 @@ file(GLOB_RECURSE headers "*.h")
 add_executable(${TARGET_NAME}
    main.cpp
    arguments.cpp
+   load_sections.cpp
    ${headers}
 )
 

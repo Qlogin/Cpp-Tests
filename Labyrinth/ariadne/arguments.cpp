@@ -17,9 +17,9 @@ boost::optional<arguments_t> parse_arguments( int argc, char * argv[] )
          "specify path to file with labyrinth")
       ("route"   , po::value<std::string>(&parsed.route)->required(),
          "describe route in format /[dlru]+/")
-      ("x"       , po::value<int>(&parsed.x0)->default_value(0),
+      ("x,x"     , po::value<int>(&parsed.x0)->default_value(0),
          "start position x-coordinate")
-      ("y"       , po::value<int>(&parsed.y0)->default_value(0),
+      ("y,y"     , po::value<int>(&parsed.y0)->default_value(0),
          "start position y-coordinate")
       ;
 

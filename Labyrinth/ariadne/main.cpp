@@ -1,8 +1,33 @@
 #include "arguments.h"
-#include <knossos/labyrinth.h>
+#include "load_sections.h"
 
+#include <boost/format.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+
+#include <fstream>
 #include <iostream>
 
+
+namespace ba = boost::adaptors;
+
+namespace
+{
+   knossos::direction_t char_to_dir(char ch)
+   {
+      switch (ch)
+      {
+      case 'u': return knossos::dir_up;
+      case 'd': return knossos::dir_down;
+      case 'l': return knossos::dir_left;
+      case 'r': return knossos::dir_right;
+      default:
+         {
+            boost::format error("invalid route character: %1%");
+            throw std::runtime_error(str(error % ch));
+         }
+      }
+   }
+}
 
 int main(int argc, char *argv[])
 {
@@ -12,34 +37,17 @@ int main(int argc, char *argv[])
       if (!args)
          return 0;
 
-      knossos::labyrinth_t lab;
-      // TODO: lab = knossos::load_from_file(arguments.board_path);
+      std::vector<knossos::position_t> sections;
+      load_sections(args->board_path, sections);
 
+      knossos::labyrinth_t lab(sections);
       if (!lab.set_position(knossos::position_t{args->x0, args->y0}))
       {
          std::cerr << "incorrect start position: " << args->x0 << " " << args->y0 << std::endl;
          return 1;
       }
 
-      std::vector<knossos::direction_t> route;
-      route.reserve((args->route.size()));
-
-      for (auto const & ch : args->route)
-      {
-         switch (ch)
-         {
-         case 'u': route.push_back(knossos::direction_t::up); break;
-         case 'd': route.push_back(knossos::direction_t::down); break;
-         case 'l': route.push_back(knossos::direction_t::left); break;
-         case 'r': route.push_back(knossos::direction_t::right); break;
-         default:
-            {
-               std::cerr << "invalid route symbol: " << ch << std::endl;
-               return 1;
-            }
-         }
-      }
-      lab.navigate(route);
+      lab.navigate(args->route | ba::transformed(&char_to_dir));
 
       auto pos = lab.get_position();
       if (!pos)

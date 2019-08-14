@@ -1,4 +1,4 @@
-#include <knossos/labyrinth.h>
+#include "utils.h"
 
 #include <set>
 #include <exception>
@@ -36,31 +36,13 @@ namespace knossos
             return ls.x < rs.x || (ls.x == rs.x && ls.y < rs.y);
          }
       };
-
-      direction_t opposite_direction( direction_t dir )
-      {
-         return direction_t((int(dir) + 2) % 4);
-      }
-
-      position_t move( position_t const & pos, direction_t dir )
-      {
-         position_t res(pos);
-         switch (dir)
-         {
-         case direction_t::left:  --res.x; break;
-         case direction_t::right: ++res.x; break;
-         case direction_t::up:    ++res.y; break;
-         case direction_t::down:  --res.y; break;
-         default:
-            assert(false);
-            break;
-         }
-         return res;
-      }
    }
 
    struct labyrinth_t::impl_t
    {
+      std::set<section_t, section_compare_t> sections;
+      boost::optional<position_t>            position;
+
       section_t const * find_section(position_t const & pos) const
       {
          auto itr = sections.find(pos);
@@ -68,9 +50,6 @@ namespace knossos
             return nullptr;
          return &(*itr);
       }
-
-      std::set<section_t, section_compare_t> sections;
-      boost::optional<position_t>            position;
    };
 
    ////////////////////////////////////////////////////////////////////////////
@@ -79,8 +58,8 @@ namespace knossos
       : pimpl_(new impl_t)
    {}
 
-   labyrinth_t::labyrinth_t( sections_range_t sections,
-                             boost::optional<position_t> const & start_pos )
+   labyrinth_t::labyrinth_t(sections_range_t sections,
+                            boost::optional<position_t> const & start_pos)
       : labyrinth_t()
    {
       add_sections(sections);
@@ -94,12 +73,12 @@ namespace knossos
 
    void labyrinth_t::add_sections(sections_range_t sections)
    {
-      for (position_t const & pos : sections)
+      for (position_t pos : sections)
       {
          auto result = pimpl_->sections.emplace(pos);
          if (result.second)
          {
-            for (auto const & dir : {left, right, down, up})
+            for (auto dir : {dir_left, dir_right, dir_down, dir_up})
             {
                if (auto section = pimpl_->find_section(move(pos, dir)))
                {
@@ -113,7 +92,21 @@ namespace knossos
 
    void labyrinth_t::remove_sections(sections_range_t sections)
    {
-      // TODO:
+      for (position_t pos : sections)
+      {
+         auto itr = pimpl_->sections.find(pos);
+         if (itr != pimpl_->sections.end())
+         {
+            for (auto dir : {dir_left, dir_right, dir_down, dir_up})
+               if (auto neigbour = itr->neigbours[dir])
+                  neigbour->neigbours[opposite_direction(dir)] = nullptr;
+
+            pimpl_->sections.erase(itr);
+         }
+
+         if (pimpl_->position == pos)
+            pimpl_->position.reset();
+      }
    }
 
    bool labyrinth_t::set_position(position_t const & position)
@@ -130,7 +123,7 @@ namespace knossos
       return pimpl_->position;
    }
 
-   void labyrinth_t::navigate( directions_range_t route )
+   void labyrinth_t::navigate(directions_range_t route)
    {
       if (!pimpl_->position)
          throw std::runtime_error("position is not set");
