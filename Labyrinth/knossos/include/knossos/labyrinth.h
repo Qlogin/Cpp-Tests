@@ -1,5 +1,7 @@
 #pragma once
 
+#include <knossos/export.h>
+
 #include <boost/range/any_range.hpp>
 #include <boost/optional.hpp>
 
@@ -46,7 +48,7 @@ namespace knossos
    {
    };
 
-   class labyrinth_t
+   class KNOSSOS_EXPORT labyrinth_t
    {
    public:
       labyrinth_t();
