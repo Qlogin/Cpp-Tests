@@ -40,7 +40,7 @@ namespace knossos
 
    typedef
       values_range_t<position_t>::type
-      sections_range_t;
+      positions_range_t;
 
    ////////////////////////////////////////////////////////////////////////////
 
@@ -52,19 +52,20 @@ namespace knossos
    {
    public:
       labyrinth_t();
-      labyrinth_t(sections_range_t sections,
+      labyrinth_t(positions_range_t sections,
                   boost::optional<position_t> const & start_position = boost::none);
       ~labyrinth_t();
 
-      void add_sections(sections_range_t sections);
-      void remove_sections(sections_range_t sections);
+      void add_sections(positions_range_t sections);
+      void remove_sections(positions_range_t sections);
+      positions_range_t sections() const;
 
-      bool position_is_set() const;
+      bool is_position_set() const;
       bool set_position(position_t const & position);
-      position_t const & get_position() const;
+      position_t const & position() const;
 
-      void navigate(directions_range_t route,
-                    boost::optional<position_t> const & start_position = boost::none);
+      position_t const & navigate(directions_range_t route,
+         boost::optional<position_t> const & start_position = boost::none);
    private:
       struct impl_t;
       std::unique_ptr<impl_t> pimpl_;

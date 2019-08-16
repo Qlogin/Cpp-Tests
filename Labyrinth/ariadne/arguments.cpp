@@ -13,7 +13,7 @@ boost::optional<arguments_t> parse_arguments( int argc, char * argv[] )
    arguments_t parsed;
    descr.add_options()
       ("help,h"  , "display this help and exit")
-      ("board"   , po::value<fs::path>(&parsed.board_path)->required(),
+      ("board"   , po::value<std::string>(&parsed.board_path)->required(),
          "specify path to file with labyrinth")
       ("route"   , po::value<std::string>(&parsed.route)->required(),
          "describe route in format /[dlru]+/")
@@ -21,6 +21,8 @@ boost::optional<arguments_t> parse_arguments( int argc, char * argv[] )
          "start position x-coordinate")
       ("y,y"     , po::value<int>(&parsed.y0)->default_value(0),
          "start position y-coordinate")
+      ("output,o", po::value<std::string>(&parsed.output_path),
+         "output result to specified file (instead of stdout)")
       ;
 
    auto print_usage = [&descr]

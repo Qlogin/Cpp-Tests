@@ -4,6 +4,10 @@
 #include <set>
 #include <assert.h>
 
+#include <boost/range/adaptor/transformed.hpp>
+
+namespace ba = boost::adaptors;
+using boost::optional;
 
 namespace knossos
 {
@@ -38,6 +42,8 @@ namespace knossos
       };
    }
 
+   ////////////////////////////////////////////////////////////////////////////
+
    struct labyrinth_t::impl_t
    {
       std::set<section_t, section_compare_t> sections;
@@ -58,8 +64,8 @@ namespace knossos
       : pimpl_(new impl_t)
    {}
 
-   labyrinth_t::labyrinth_t(sections_range_t sections,
-                            boost::optional<position_t> const & start_pos)
+   labyrinth_t::labyrinth_t(positions_range_t sections,
+                            optional<position_t> const & start_pos)
       : labyrinth_t()
    {
       add_sections(sections);
@@ -71,7 +77,7 @@ namespace knossos
    labyrinth_t::~labyrinth_t()
    {}
 
-   void labyrinth_t::add_sections(sections_range_t sections)
+   void labyrinth_t::add_sections(positions_range_t sections)
    {
       for (position_t pos : sections)
       {
@@ -90,7 +96,7 @@ namespace knossos
       }
    }
 
-   void labyrinth_t::remove_sections(sections_range_t sections)
+   void labyrinth_t::remove_sections(positions_range_t sections)
    {
       for (position_t pos : sections)
       {
@@ -109,6 +115,15 @@ namespace knossos
       }
    }
 
+   positions_range_t labyrinth_t::sections() const
+   {
+      return pimpl_->sections | ba::transformed(
+         [](section_t const & section)
+         {
+            return static_cast<position_t const &>(section);
+         });
+   }
+
    bool labyrinth_t::set_position(position_t const & position)
    {
       if (auto section = pimpl_->find_section(position))
@@ -119,16 +134,21 @@ namespace knossos
       return false;
    }
 
-   position_t const & labyrinth_t::get_position() const
+   bool labyrinth_t::is_position_set() const
    {
-      if (pimpl_->current_pos)
+      return pimpl_->current_pos != nullptr;
+   }
+
+   position_t const & labyrinth_t::position() const
+   {
+      if (!pimpl_->current_pos)
          throw position_not_set_error_t();
 
       return *pimpl_->current_pos;
    }
 
-   void labyrinth_t::navigate(directions_range_t route,
-                              boost::optional<position_t> const & start_pos)
+   position_t const & labyrinth_t::navigate(directions_range_t route,
+                                            optional<position_t> const & start_pos)
    {
       if (start_pos && !set_position(*start_pos))
          throw incorrect_position_error_t();
@@ -138,5 +158,9 @@ namespace knossos
       for (auto dir : route)
          if (auto next = pimpl_->current_pos->neigbours[dir])
             pimpl_->current_pos = next;
+
+      return *pimpl_->current_pos;
    }
+
+   ////////////////////////////////////////////////////////////////////////////
 }

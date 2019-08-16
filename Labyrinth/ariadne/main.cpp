@@ -48,8 +48,19 @@ int main(int argc, char *argv[])
       }
       lab.navigate(args->route | ba::transformed(&char_to_dir));
 
-      auto const & pos = lab.get_position();
-      std::cout << "(" << pos.x << "," << pos.y << ")" << std::endl;
+      auto const & pos = lab.position();
+      if (args->output_path.empty())
+         std::cout << "(" << pos.x << "," << pos.y << ")" << std::endl;
+      else
+      {
+         std::ofstream outf(args->output_path.c_str());
+         if (!outf)
+         {
+            std::cerr << "failed to write file: " << args->output_path << std::endl;
+            return 1;
+         }
+         outf << "(" << pos.x << "," << pos.y << ")";
+      }
       return 0;
    }
    catch (std::exception const & e)
