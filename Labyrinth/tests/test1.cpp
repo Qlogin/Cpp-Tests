@@ -15,7 +15,7 @@ static knossos::position_t sections[num_sections] =
 
 ///////////////////////////////////////////////////////////////////////////////
 
-BOOST_AUTO_TEST_SUITE(testSuiteLabyrinth)
+BOOST_AUTO_TEST_SUITE(testClassLabyrinth)
 
 BOOST_AUTO_TEST_CASE(testPosition)
 {
@@ -23,8 +23,8 @@ BOOST_AUTO_TEST_CASE(testPosition)
    knossos::position_t const invalid_pos{-1, -1};
    knossos::labyrinth_t lab(sections);
 
-   BOOST_CHECK_EQUAL(lab.is_position_set(), false);
-   BOOST_CHECK_EQUAL(lab.set_position(invalid_pos), false);
+   BOOST_CHECK(!lab.is_position_set());
+   BOOST_CHECK(!lab.set_position(invalid_pos));
    BOOST_CHECK_THROW(lab.position(), knossos::position_error_t);
    BOOST_CHECK(lab.set_position(valid_pos));
 
@@ -41,7 +41,8 @@ BOOST_AUTO_TEST_CASE(testSections)
    BOOST_CHECK(num_sections == boost::size(lab.sections()));
 
    lab.remove_sections(sections);
-   BOOST_CHECK_EQUAL(lab.is_position_set(), false);
+   BOOST_CHECK(!lab.is_position_set());
+   BOOST_CHECK(boost::size(lab.sections()) == 0);
 }
 
 BOOST_AUTO_TEST_CASE(testRoute)

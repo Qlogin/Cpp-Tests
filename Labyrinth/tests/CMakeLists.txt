@@ -6,7 +6,7 @@ find_package(Boost QUIET
 )
 
 if (Boost_UNIT_TEST_FRAMEWORK_FOUND)
-   message(STATUS "  unit_test_framework")
+   message(STATUS "Found: unit_test_framework")
 else()
    message(FATAL_ERROR "Boost.Test not found! Turn off BUILD_TESTING option")
 endif()

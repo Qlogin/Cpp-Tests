@@ -21,7 +21,7 @@ namespace knossos
          {}
 
          section_t( int x = 0, int y = 0 )
-            : section_t(position_t{x, y})
+            : section_t(position_t(x, y))
          {}
 
          typedef

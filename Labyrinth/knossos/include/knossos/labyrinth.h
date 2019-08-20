@@ -19,7 +19,12 @@ namespace knossos
    /// Координаты на двухмерной плоскости
    struct position_t
    {
-      int x = 0, y = 0;
+      position_t(int x = 0, int y = 0)
+         : x(x)
+         , y(y)
+      {}
+
+      int x, y;
    };
 
    /// Шагать можно только по следующим направлениям:
