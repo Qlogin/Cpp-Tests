@@ -17,6 +17,7 @@ target_link_libraries(${TARGET_NAME}
       Boost::system
       Boost::filesystem
       Boost::program_options
+      Boost::dynamic_linking
 )
 
 install(TARGETS ${TARGET_NAME} RUNTIME DESTINATION bin)

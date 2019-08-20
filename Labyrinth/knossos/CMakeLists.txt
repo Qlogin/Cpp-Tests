@@ -31,6 +31,7 @@ target_include_directories(${TARGET_NAME}
 
 target_link_libraries(${TARGET_NAME}
    Boost::filesystem
+   Boost::dynamic_linking
 )
 
 # Install public headers

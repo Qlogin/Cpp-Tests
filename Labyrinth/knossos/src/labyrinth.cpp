@@ -2,6 +2,7 @@
 #include "exceptions.h"
 
 #include <set>
+#include <array>
 #include <assert.h>
 
 #include <boost/range/adaptor/transformed.hpp>
