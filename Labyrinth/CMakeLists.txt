@@ -18,6 +18,14 @@ find_package(Boost 1.58 REQUIRED
       program_options
 )
 
+# Use Boost shared libraries
+if (WIN32)
+  option(WITH_SHARED_BOOST "Use shared Boost")
+  if (WITH_SHARED_BOOST)
+    set(BOOST_LINKING Boost::dynamic_linking)
+  endif()
+endif()
+
 add_subdirectory(knossos)
 add_subdirectory(ariadne)
 
