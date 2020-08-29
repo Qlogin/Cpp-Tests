@@ -1,8 +1,8 @@
-#ifndef SUDOKUWIDGET_H
-#define SUDOKUWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include <memory>
+
 
 class SudokuWidget : public QWidget
 {
@@ -13,6 +13,17 @@ public:
    ~SudokuWidget();
 
    uint value(uint row, uint col) const;
+
+   enum CellType
+   {
+      Common,
+      Active,
+      Readonly,
+      Invalid,
+   };
+
+   void   setColor(CellType type, QColor const & color);
+   QColor color(CellType type) const;
 
 public slots:
    void setValue(uint row, uint col, uint value, bool readonly = false);
@@ -29,5 +40,3 @@ private:
    struct SudokuWidgetPrivate;
    std::unique_ptr<SudokuWidgetPrivate> pimpl_;
 };
-
-#endif // SUDOKUWIDGET_H
