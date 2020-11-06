@@ -15,6 +15,7 @@ struct SudokuWidget::SudokuWidgetPrivate
 {
    SudokuWidgetPrivate(uint N, QWidget * self)
       : max_num(N * N)
+      , N(N)
    {
       values.resize(max_num * max_num, 0);
       cells.resize(values.size(), nullptr);
@@ -25,7 +26,61 @@ struct SudokuWidget::SudokuWidgetPrivate
       palette[Invalid]  = QColor(255, 200, 200);
    }
 
-   uint max_num;
+   void validate(uint row, uint col)
+   {
+      if (auto val = values[row * max_num + col])
+      {
+         bool invalid = false;
+         for (uint i = 0; i < max_num; ++i)
+            if (i != col && values[row * max_num + i] == val)
+            {
+               cells[row * max_num + i]->setInvalid(true);
+               invalid = true;
+            }
+
+         for (uint i = 0; i < max_num; ++i)
+            if (i != row && values[i * max_num + col] == val)
+            {
+               cells[i * max_num + col]->setInvalid(true);
+               invalid = true;
+            }
+
+         for (uint i = 0; i < max_num; ++i)
+         {
+            uint const r = (row / N) * N + i / N;
+            uint const c = (col / N) * N + i % N;
+
+            if ((r != row || c != col) && values[r * max_num + c] == val)
+            {
+               cells[r * max_num + c]->setInvalid(true);
+               invalid = true;
+            }
+         }
+         cells[row * max_num + col]->setInvalid(invalid);
+      }
+      else if (cells[row * max_num + col]->isInvalid())
+      {
+         cells[row * max_num + col]->setInvalid(false);
+         for (uint i = 0; i < max_num; ++i)
+            if (values[row * max_num + i])
+               validate(row, i);
+
+         for (uint i = 0; i < max_num; ++i)
+            if (values[i * max_num + col])
+               validate(i, col);
+
+         for (uint i = 0; i < max_num; ++i)
+         {
+            uint const r = (row / N) * N + i / N;
+            uint const c = (col / N) * N + i % N;
+
+            if (values[r * max_num + c])
+               validate(r, c);
+         }
+      }
+   }
+
+   uint max_num, N;
    std::vector<uint> values;
    std::vector<CellEdit *> cells;
    CellEdit::Palette palette;
@@ -69,6 +124,7 @@ SudokuWidget::SudokuWidget(QWidget *parent, uint N)
                if (new_val != d.values[id])
                {
                   d.values[id] = new_val;
+                  d.validate(id / d.max_num, id % d.max_num);
                   emit valueChanged(id / d.max_num, id % d.max_num, new_val);
                }
             });
@@ -183,6 +239,7 @@ void SudokuWidget::setValue(uint row, uint col, uint value, bool readonly)
       if (d.values[idx] != value)
       {
          d.values[idx] = value;
+         d.validate(row, col);
          emit valueChanged(row, col, value);
       }
    }
@@ -204,12 +261,15 @@ void SudokuWidget::clear(bool reset_readonly)
 {
    auto & d = *pimpl_;
 
-   for (auto e : d.cells)
+   for (uint i = 0; i != d.cells.size(); ++i)
+   {
+      auto e = d.cells[i];
       if (reset_readonly || !e->isReadOnly())
       {
+         d.values[i] = 0;
          e->setReadOnly(false);
          e->clear();
       }
-
-   std::fill(d.values.begin(), d.values.end(), 0);
+      e->setInvalid(false);
+   }
 }

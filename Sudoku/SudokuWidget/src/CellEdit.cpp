@@ -72,9 +72,24 @@ void CellEdit::setReadOnly( bool readonly )
    update();
 }
 
+void CellEdit::setInvalid( bool invalid )
+{
+   if (invalid_ != invalid)
+   {
+      invalid_ = invalid;
+      update();
+   }
+}
+
+bool CellEdit::isInvalid() const
+{
+   return invalid_;
+}
+
 void CellEdit::update()
 {
    setBackground(isReadOnly() ? palette_[SudokuWidget::Readonly] :
+                 invalid_     ? palette_[SudokuWidget::Invalid]  :
                  hasFocus()   ? palette_[SudokuWidget::Active]   :
                                 palette_[SudokuWidget::Common]);
 }
@@ -112,14 +127,14 @@ void CellEdit::keyPressEvent(QKeyEvent * e)
 
 void CellEdit::focusInEvent(QFocusEvent * e)
 {
-   if (!isReadOnly())
+   if (!isReadOnly() && !invalid_)
       setBackground(palette_[SudokuWidget::Active]);
    QLineEdit::focusInEvent(e);
 }
 
 void CellEdit::focusOutEvent(QFocusEvent * e)
 {
-   if (!isReadOnly())
+   if (!isReadOnly() && !invalid_)
       setBackground(palette_[SudokuWidget::Common]);
    QLineEdit::focusOutEvent(e);
 }

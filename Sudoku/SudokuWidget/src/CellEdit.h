@@ -17,6 +17,9 @@ public:
    void setReadOnly( bool readonly );
    void update();
 
+   void setInvalid( bool invalid );
+   bool isInvalid() const;
+
 private:
    void setBackground( QColor const & color );
 
@@ -29,4 +32,5 @@ private:
 
 private:
    Palette const & palette_;
+   bool invalid_ = false;
 };
