@@ -16,6 +16,7 @@ public:
 
    uint value() const;
    void setValue( uint value );
+   void enableValues( std::vector<uint> const & values, bool enable );
 
 signals:
    void valueChanged( uint );

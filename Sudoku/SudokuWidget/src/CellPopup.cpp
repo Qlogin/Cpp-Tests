@@ -58,3 +58,10 @@ void CellPopup::setValue(uint new_value)
       emit valueChanged(value_);
    }
 }
+
+void CellPopup::enableValues( std::vector<uint> const & values, bool enable )
+{
+   for (auto const & val : values)
+      if (val && val <= buttons_.size())
+         buttons_[val - 1]->setEnabled(enable);
+}

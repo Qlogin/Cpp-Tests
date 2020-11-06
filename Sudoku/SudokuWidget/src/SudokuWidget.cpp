@@ -80,6 +80,30 @@ struct SudokuWidget::SudokuWidgetPrivate
       }
    }
 
+   std::vector<uint> invalidValues(int row, int col)
+   {
+      std::vector<bool> has(max_num + 1, false);
+      for (uint i = 0; i < max_num; ++i)
+         has[values[row * max_num + i]] = true;
+
+      for (uint i = 0; i < max_num; ++i)
+         has[values[i * max_num + col]] = true;
+
+      for (uint i = 0; i < max_num; ++i)
+      {
+         uint const r = (row / N) * N + i / N;
+         uint const c = (col / N) * N + i % N;
+         has[values[r * max_num + c]] = true;
+      }
+      has[values[row * max_num + col]] = false;
+
+      std::vector<uint> res;
+      for (uint i = 1; i <= max_num; ++i)
+         if (has[i])
+            res.push_back(i);
+      return res;
+   }
+
    uint max_num, N;
    std::vector<uint> values;
    std::vector<CellEdit *> cells;
@@ -139,6 +163,7 @@ SudokuWidget::SudokuWidget(QWidget *parent, uint N)
                {
                   CellPopup popup(this, N);
                   popup.setValue(d.values[id]);
+                  popup.enableValues(d.invalidValues(id / d.max_num, id % d.max_num), false);
                   popup.move(d.cells[id]->mapToGlobal(pos));
 
                   if (QDialog::Accepted == popup.exec())
