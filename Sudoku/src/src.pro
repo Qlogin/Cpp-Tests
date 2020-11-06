@@ -9,4 +9,8 @@ unix: PRE_TARGETDEPS += $$OUT_PWD/../SudokuWidget/libSudokuWidget.a
 TARGET = Sudoku
 TEMPLATE = app
 CONFIG += c++11
-SOURCES += main.cpp
+SOURCES += main.cpp \
+   sudoku.cpp
+
+HEADERS += \
+   sudoku.h
