@@ -1,5 +1,6 @@
 #include "SudokuWidget.h"
 #include "CellEdit.h"
+#include "CellPopup.h"
 
 #include <QGridLayout>
 #include <QFrame>
@@ -69,6 +70,23 @@ SudokuWidget::SudokuWidget(QWidget *parent, uint N)
                {
                   d.values[id] = new_val;
                   emit valueChanged(id / d.max_num, id % d.max_num, new_val);
+               }
+            });
+
+         edit->setContextMenuPolicy(Qt::CustomContextMenu);
+         connect(edit, &QWidget::customContextMenuRequested, this,
+            [this, id, N] (QPoint const & pos)
+            {
+               auto & d = *pimpl_;
+
+               if (!d.cells[id]->isReadOnly())
+               {
+                  CellPopup popup(this, N);
+                  popup.setValue(d.values[id]);
+                  popup.move(d.cells[id]->mapToGlobal(pos));
+
+                  if (QDialog::Accepted == popup.exec())
+                     setValue(id / d.max_num, id % d.max_num, popup.value());
                }
             });
       }
@@ -144,21 +162,28 @@ void SudokuWidget::setValue(uint row, uint col, uint value, bool readonly)
 
    if (row < d.max_num && col < d.max_num)
    {
+      if (value > d.max_num)
+         value = 0;
+
       auto const idx = row * d.max_num + col;
       auto edit = d.cells[idx];
       QSignalBlocker block(edit);
 
-      if (0 < value && value <= d.max_num)
+      if (value)
       {
-         d.values[idx] = value;
          edit->setText(QString::number(value));
          edit->setReadOnly(readonly);
       }
       else
       {
-         d.values[idx] = 0;
          edit->setReadOnly(false);
          edit->clear();
+      }
+
+      if (d.values[idx] != value)
+      {
+         d.values[idx] = value;
+         emit valueChanged(row, col, value);
       }
    }
 }
