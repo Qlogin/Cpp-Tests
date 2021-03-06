@@ -326,3 +326,13 @@ void long_number_t::swap(long_number_t & other)
    std::swap(digits_, other.digits_);
    std::swap(negative_, other.negative_);
 }
+
+long_number_t operator "" _ln(const char * str)
+{
+   return long_number_t::from_string(str);
+}
+
+long_number_t operator "" _ln(const char * str, std::size_t size)
+{
+   return long_number_t::from_string(std::string_view(str, size));
+}

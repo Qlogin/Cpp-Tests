@@ -13,10 +13,28 @@ std::string to_string(long_number_t const & x)
    return x.to_string();
 }
 
+void test(long_number_t const & x1, long_number_t const & x2)
+{
+   auto print = [&] ( char op, auto const & res )
+   {
+      std::cout << x1.to_string() << " " << op << " " << x2.to_string() 
+                << " is " << to_string(res) << std::endl;
+   };
+
+   print('+', x1 + x2);
+   print('-', x1 - x2);
+   print('*', x1 * x2);
+   print('<', x1 < x2);
+   print('>', x1 > x2);
+   print('=', x1 == x2);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[])
 {
+   test(-999999_ln, "-1"_ln);
+
    std::cout << "Arbitrary-precision arithmetic" << std::endl
              << "Enter two numbers (0 0 - for exit):" << std::endl;
 
@@ -30,19 +48,7 @@ int main(int argc, char *argv[])
       {
          auto x1 = long_number_t::from_string(s1);
          auto x2 = long_number_t::from_string(s2);
-
-         auto print = [&] ( char op, auto const & res )
-         {
-            std::cout << x1.to_string() << " " << op << " " << x2.to_string() 
-                      << " is " << to_string(res) << std::endl;
-         };
-
-         print('+', x1 + x2);
-         print('-', x1 - x2);
-         print('*', x1 * x2);
-         print('<', x1 < x2);
-         print('>', x1 > x2);
-         print('=', x1 == x2);
+         test(x1, x2);
 
          if (x1.is_null() && x2.is_null())
             break;

@@ -46,3 +46,6 @@ private:
    digits_t digits_; // store digit [0..99]
    bool negative_ = false;
 };
+
+long_number_t operator "" _ln(const char *);
+long_number_t operator "" _ln(const char *, std::size_t);
