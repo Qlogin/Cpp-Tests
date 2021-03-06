@@ -70,17 +70,24 @@ namespace sudoku
       {
          bool solve( fields_t & fields )
          {
-            init(fields);
+            if (!init(fields))
+               return false;
+
             return solve_iter(fields, 0);
          }
 
       private:
-         void init(fields_t const & fields)
+         bool init(fields_t const & fields)
          {
             for (uint i = 0; i < Size; ++i)
                for (uint j = 0; j < Size; ++j)
                   if (auto val = fields[i][j])
+                  {
+                     if (!can_use(i, j, val))
+                        return false;
                      set_used(i, j, val, true);
+                  }
+            return true;
          }
 
          void set_used(uint i, uint j, uint8_t val, bool used)
