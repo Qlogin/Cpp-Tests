@@ -26,11 +26,13 @@ struct SudokuWidget::SudokuWidgetPrivate
       palette[Invalid]  = QColor(255, 200, 200);
    }
 
-   void validate(uint row, uint col)
+   void validate(uint row, uint col, bool with_neighbours = true)
    {
+      bool const was_invalid = cells[row * max_num + col]->isInvalid();
       if (auto val = values[row * max_num + col])
       {
          bool invalid = false;
+         // check horizontal
          for (uint i = 0; i < max_num; ++i)
             if (i != col && values[row * max_num + i] == val)
             {
@@ -38,6 +40,7 @@ struct SudokuWidget::SudokuWidgetPrivate
                invalid = true;
             }
 
+         // check vertical
          for (uint i = 0; i < max_num; ++i)
             if (i != row && values[i * max_num + col] == val)
             {
@@ -45,6 +48,7 @@ struct SudokuWidget::SudokuWidgetPrivate
                invalid = true;
             }
 
+         // check block
          for (uint i = 0; i < max_num; ++i)
          {
             uint const r = (row / N) * N + i / N;
@@ -58,24 +62,27 @@ struct SudokuWidget::SudokuWidgetPrivate
          }
          cells[row * max_num + col]->setInvalid(invalid);
       }
-      else if (cells[row * max_num + col]->isInvalid())
+
+      // if cell was invalid and `with_neighbours` is set
+      // try to restore cells that led to invalid state
+      if (was_invalid && with_neighbours)
       {
          cells[row * max_num + col]->setInvalid(false);
          for (uint i = 0; i < max_num; ++i)
-            if (values[row * max_num + i])
-               validate(row, i);
+            if (cells[row * max_num + i]->isInvalid())
+               validate(row, i, false);
 
          for (uint i = 0; i < max_num; ++i)
-            if (values[i * max_num + col])
-               validate(i, col);
+            if (cells[i * max_num + col]->isInvalid())
+               validate(i, col, false);
 
          for (uint i = 0; i < max_num; ++i)
          {
             uint const r = (row / N) * N + i / N;
             uint const c = (col / N) * N + i % N;
 
-            if (values[r * max_num + c])
-               validate(r, c);
+            if (cells[r * max_num + c]->isInvalid())
+               validate(r, c, false);
          }
       }
    }
