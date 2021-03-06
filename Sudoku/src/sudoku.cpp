@@ -3,7 +3,11 @@
 #include <QFile>
 #include <QTextStream>
 
+#include <stack>
+#include <cassert>
 #include <cmath>
+
+#define USE_RECURSIVE 0
 
 
 namespace sudoku
@@ -66,17 +70,10 @@ namespace sudoku
 
    namespace
    {
-      struct solution_t
+      struct solution_base_t
       {
-         bool solve( fields_t & fields )
-         {
-            if (!init(fields))
-               return false;
-
-            return solve_iter(fields, 0);
-         }
-
-      private:
+      protected:
+         /// initialize and validate input data
          bool init(fields_t const & fields)
          {
             for (uint i = 0; i < Size; ++i)
@@ -105,6 +102,27 @@ namespace sudoku
             return !hor_[i][val] && !vert_[j][val] && !quad_[qi * Dim + qj][val];
          }
 
+      private:
+         using NumberSet = std::array<std::array<bool, Size + 1>, Size>;
+         NumberSet hor_{}, vert_{}, quad_{};
+      };
+
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      /// Solution that use recursion
+
+      struct recursive_solution_t : solution_base_t
+      {
+         recursive_solution_t() = default;
+
+         bool solve( fields_t & fields )
+         {
+            if (!init(fields))
+               return false;
+
+            return solve_iter(fields, 0);
+         }
+
+      private:
          bool solve_iter(fields_t & fields, uint step)
          {
             static constexpr uint last_step = Size * Size;
@@ -132,15 +150,83 @@ namespace sudoku
             }
             return step == last_step;
          }
+      };
+
+      /////////////////////////////////////////////////////////////////////////////////////////////
+      /// Similar solution without recursion
+
+      struct simple_solution_t : solution_base_t
+      {
+         simple_solution_t( fields_t & fields )
+            : fields_(fields)
+         {}
+
+         bool solve()
+         {
+            if (!init(fields_))
+               return false;
+
+            auto steps = empty_fields();
+            auto it = steps.begin();
+
+            while (it != steps.end())
+            {
+               if (!do_iter(it->first, it->second))
+               {
+                  if (it == steps.begin())
+                     return false;
+                  --it;
+               }
+               else
+                  ++it;
+            }
+            return true;
+         }
 
       private:
-         using NumberSet = std::array<std::array<bool, Size + 1>, Size>;
-         NumberSet hor_, vert_, quad_;
+         std::vector<std::pair<uint, uint>> empty_fields() const
+         {
+            std::vector<std::pair<uint, uint>> res;
+            for (uint i = 0; i < Size; ++i)
+               for (uint j = 0; j < Size; ++j)
+                  if (!fields_[i][j])
+                     res.emplace_back(i, j);
+            return res;
+         }
+
+         bool do_iter(uint i, uint j)
+         {
+            for (uint8_t val = fields_[i][j] + 1; val <= Size; ++val)
+               if (can_use(i, j, val))
+               {
+                  set_value(i, j, val);
+                  return true;
+               }
+
+            set_value(i, j, 0);
+            return false;
+         }
+
+         void set_value( uint i, uint j, uint8_t new_val )
+         {
+            if (auto old_val = fields_[i][j])
+               set_used(i, j, old_val, false);
+            if (new_val)
+               set_used(i, j, new_val, true);
+            fields_[i][j] = new_val;
+         }
+
+      private:
+         fields_t & fields_;
       };
    }
 
    bool solve( fields_t & fields )
    {
-      return solution_t().solve(fields);
+      #if USE_RECURSIVE
+         return recursive_solution_t().solve(fields);
+      #else
+         return simple_solution_t(fields).solve();
+      #endif
    }
 }
